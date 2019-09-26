@@ -32,6 +32,7 @@
       {:class (when @expanded? :is-active)}
       [:div.navbar-start
        [nav-link "#/" "Home" :home]
+       [nav-link "#/test" "Test" :test]
        [nav-link "#/about" "About" :about]]]]))
 
 (defn about-page []
@@ -43,9 +44,24 @@
    (when-let [docs @(rf/subscribe [:docs])]
      [:div {:dangerouslySetInnerHTML {:__html (md->html docs)}}])])
 
+(defn test-page []
+  [:div
+   [:h1 "Test Page"]
+   [:p (str "Counter: " @(rf/subscribe [:counter]))]
+   [:input {
+     :type :number
+     :value @(rf/subscribe [:delta]) 
+     :on-change #(rf/dispatch [:delta (-> % .-target .-value)])
+     }]
+   [:button {:on-click #(rf/dispatch [:inc])} "Inc"]
+   [:button {:on-click #(rf/dispatch [:dec])} "Dec"]
+   [:button {:on-click #(rf/dispatch [:reset])} "Reset"]]
+)
+
 (def pages
   {:home #'home-page
-   :about #'about-page})
+   :about #'about-page
+   :test #'test-page})
 
 (defn page []
   [:div
@@ -58,7 +74,8 @@
 (def router
   (reitit/router
     [["/" :home]
-     ["/about" :about]]))
+     ["/about" :about]
+     ["/test" :test]]))
 
 ;; -------------------------
 ;; History
@@ -83,6 +100,7 @@
   (rf/dispatch-sync [:navigate (reitit/match-by-name router :home)])
   
   (ajax/load-interceptors!)
+  (rf/dispatch [:initial-db])
   (rf/dispatch [:fetch-docs])
   (hook-browser-navigation!)
   (mount-components))
